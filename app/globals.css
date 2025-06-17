@@ -1,0 +1,170 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 220 13% 18%;
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 43 74% 66%;
+    --secondary-foreground: 43 74% 10%;
+
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+
+    --accent: 347 77% 50%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 220 13% 18%;
+
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 220 13% 18%;
+    --foreground: 0 0% 98%;
+
+    --card: 220 13% 18%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 220 13% 18%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 0 0% 98%;
+    --primary-foreground: 220 13% 18%;
+
+    --secondary: 43 74% 66%;
+    --secondary-foreground: 43 74% 10%;
+
+    --muted: 215 28% 17%;
+    --muted-foreground: 218 11% 65%;
+
+    --accent: 347 77% 50%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 215 28% 17%;
+    --input: 215 28% 17%;
+    --ring: 0 0% 98%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer components {
+  .elegant-card {
+    @apply bg-white/80 backdrop-blur-sm border border-midnight-200/50 rounded-2xl shadow-elegant hover:shadow-elegant-lg transition-all duration-500;
+  }
+
+  .elegant-gradient {
+    @apply bg-gradient-to-br from-midnight-900 via-midnight-800 to-midnight-700;
+  }
+
+  .gold-gradient {
+    @apply bg-gradient-to-r from-gold-400 via-gold-500 to-gold-600 bg-clip-text text-transparent;
+  }
+
+  .section-divider {
+    @apply w-24 h-1 bg-gradient-to-r from-gold-400 to-rose-400 rounded-full mx-auto mb-8;
+  }
+
+  .glass-morphism {
+    @apply bg-white/10 backdrop-blur-md border border-white/20 shadow-elegant;
+  }
+
+  .text-shadow {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .elegant-hover {
+    @apply transition-all duration-300 ease-out hover:scale-105 hover:shadow-elegant-lg;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-midnight-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-midnight-400 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-midnight-500;
+}
+
+/* Smooth scroll behavior */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Selection styling */
+::selection {
+  @apply bg-gold-200 text-midnight-900;
+}
+
+/* Focus styles */
+.focus-elegant:focus {
+  @apply outline-none ring-2 ring-gold-400 ring-offset-2 ring-offset-white;
+}
+
+/* Shimmer effect */
+.shimmer {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* Parallax container */
+.parallax-container {
+  height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  perspective: 1px;
+}
+
+.parallax-element {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+
+.parallax-back {
+  transform: translateZ(-1px) scale(2);
+}
+
+.parallax-base {
+  transform: translateZ(0);
+}
