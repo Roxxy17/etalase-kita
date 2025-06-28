@@ -49,37 +49,43 @@ export default function ProductsPage() {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 5000000])
   const [sortBy, setSortBy] = useState("newest")
   const [searchQuery, setSearchQuery] = useState("")
+useEffect(() => {
+  const fetchProducts = async () => {
+    try {
+      const params = new URLSearchParams()
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const params = new URLSearchParams()
-        if (selectedCategories.length === 1) params.append("category", selectedCategories[0])
-        if (selectedSMEs.length === 1) params.append("smeId", selectedSMEs[0])
+      selectedCategories.forEach((cat) => {
+        params.append("category", cat)
+      })
 
-        const res = await fetch(`/api/products?${params.toString()}`)
-        const raw = await res.json()
+      selectedSMEs.forEach((smeId) => {
+        params.append("smeId", smeId)
+      })
 
-        const data: Product[] = raw.map((item: any) => ({
-          id: item.id,
-          name: item.name,
-          description: item.description ?? "",
-          price: item.price,
-          image: item.image,
-          categorySlug: item.category_slug,
-          smeId: item.sme_id,
-          featured: item.featured,
-          createdAt: item.created_at,
-        }))
+      const res = await fetch(`/api/products?${params.toString()}`)
+      const raw = await res.json()
 
-        setProducts(data)
-      } catch (err) {
-        console.error("Gagal fetch produk:", err)
-      }
+      const data: Product[] = raw.map((item: any) => ({
+        id: item.id,
+        name: item.name,
+        description: item.description ?? "",
+        price: item.price,
+        image: item.image,
+        categorySlug: item.category_slug,
+        smeId: item.sme_id,
+        featured: item.featured,
+        createdAt: item.created_at,
+      }))
+
+      setProducts(data)
+    } catch (err) {
+      console.error("Gagal fetch produk:", err)
     }
+  }
 
-    fetchProducts()
-  }, [selectedCategories, selectedSMEs])
+  fetchProducts()
+}, [selectedCategories, selectedSMEs])
+
 
   useEffect(() => {
     const fetchCategories = async () => {
