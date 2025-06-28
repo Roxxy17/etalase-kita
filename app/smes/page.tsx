@@ -1,8 +1,6 @@
 "use client"
 
-import type React from "react"
-
-import { useState } from "react"
+import React, { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { Search, MapPin } from "lucide-react"
@@ -13,31 +11,48 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
-import { smes } from "@/lib/data"
-
 export default function SMEsPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [sortBy, setSortBy] = useState("name-asc")
-  const [filteredSMEs, setFilteredSMEs] = useState(smes)
+  const [allSMEs, setAllSMEs] = useState<any[]>([])
+  const [filteredSMEs, setFilteredSMEs] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchSMEs = async () => {
+      try {
+        const res = await fetch("/api/smes/")
+        const data = await res.json()
+        setAllSMEs(data.sort(sortSMEs(sortBy)))
+        setFilteredSMEs(data.sort(sortSMEs(sortBy)))
+      } catch (error) {
+        console.error("Gagal memuat data UMKM", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchSMEs()
+  }, [])
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value.toLowerCase()
     setSearchQuery(query)
 
     if (!query) {
-      setFilteredSMEs([...smes].sort(sortSMEs(sortBy)))
+      setFilteredSMEs([...allSMEs].sort(sortSMEs(sortBy)))
       return
     }
 
-    const filtered = smes.filter(
+    const filtered = allSMEs.filter(
       (sme) =>
         sme.name.toLowerCase().includes(query) ||
-        sme.shortDescription.toLowerCase().includes(query) ||
+        sme.short_description.toLowerCase().includes(query) ||
         sme.city.toLowerCase().includes(query) ||
-        sme.province.toLowerCase().includes(query),
+        sme.province.toLowerCase().includes(query)
     )
 
-    setFilteredSMEs([...filtered].sort(sortSMEs(sortBy)))
+    setFilteredSMEs(filtered.sort(sortSMEs(sortBy)))
   }
 
   const handleSort = (value: string) => {
@@ -46,16 +61,16 @@ export default function SMEsPage() {
   }
 
   const sortSMEs = (sortType: string) => {
-    return (a: (typeof smes)[0], b: (typeof smes)[0]) => {
+    return (a: any, b: any) => {
       switch (sortType) {
         case "name-asc":
           return a.name.localeCompare(b.name)
         case "name-desc":
           return b.name.localeCompare(a.name)
         case "newest":
-          return new Date(b.establishedDate).getTime() - new Date(a.establishedDate).getTime()
+          return new Date(b.established_date).getTime() - new Date(a.established_date).getTime()
         case "oldest":
-          return new Date(a.establishedDate).getTime() - new Date(b.establishedDate).getTime()
+          return new Date(a.established_date).getTime() - new Date(b.established_date).getTime()
         default:
           return 0
       }
@@ -93,60 +108,64 @@ export default function SMEsPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredSMEs.length > 0 ? (
-          filteredSMEs.map((sme) => (
-            <Link href={`/smes/${sme.id}`} key={sme.id} className="group">
-              <Card className="overflow-hidden h-full transition-all hover:border-primary">
-                <div className="aspect-[3/1] relative">
-                  <Image
-                    src={sme.coverImage || "/placeholder.svg?height=200&width=600"}
-                    alt={sme.name}
-                    fill
-                    className="object-cover"
-                  />
-                  <div className="absolute bottom-0 right-0 p-2">
-                    <div className="w-16 h-16 relative rounded-md overflow-hidden border-2 border-background bg-background">
-                      <Image
-                        src={sme.logo || "/placeholder.svg?height=64&width=64"}
-                        alt={sme.name}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                  </div>
-                </div>
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="font-semibold text-lg group-hover:text-primary transition-colors">{sme.name}</h3>
-                      <div className="flex items-center text-sm text-muted-foreground mt-1">
-                        <MapPin className="h-3.5 w-3.5 mr-1" />
-                        {sme.city}, {sme.province}
+      {loading ? (
+        <p className="text-center text-muted-foreground">Memuat data...</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredSMEs.length > 0 ? (
+            filteredSMEs.map((sme) => (
+              <Link href={`/smes/${sme.id}`} key={sme.id} className="group">
+                <Card className="overflow-hidden h-full transition-all hover:border-primary">
+                  <div className="aspect-[3/1] relative">
+                    <Image
+                      src={sme.cover_image || "/placeholder.svg?height=200&width=600"}
+                      alt={sme.name}
+                      fill
+                      className="object-cover"
+                    />
+                    <div className="absolute bottom-0 right-0 p-2">
+                      <div className="w-16 h-16 relative rounded-md overflow-hidden border-2 border-background bg-background">
+                        <Image
+                          src={sme.logo || "/placeholder.svg?height=64&width=64"}
+                          alt={sme.name}
+                          fill
+                          className="object-cover"
+                        />
                       </div>
                     </div>
-                    {sme.featured && <Badge>Unggulan</Badge>}
                   </div>
-                  <p className="text-muted-foreground mt-4 line-clamp-2">{sme.shortDescription}</p>
-                  <div className="mt-4 flex items-center justify-between">
-                    <p className="text-sm text-muted-foreground">
-                      {sme.productCount || Math.floor(Math.random() * 20) + 1} produk
-                    </p>
-                    <Button variant="ghost" size="sm" className="group-hover:text-primary transition-colors">
-                      Lihat Profil
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))
-        ) : (
-          <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
-            <p className="text-lg font-medium">Tidak ada UMKM yang ditemukan</p>
-            <p className="text-sm text-muted-foreground mt-1">Coba ubah kata kunci pencarian Anda</p>
-          </div>
-        )}
-      </div>
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h3 className="font-semibold text-lg group-hover:text-primary transition-colors">{sme.name}</h3>
+                        <div className="flex items-center text-sm text-muted-foreground mt-1">
+                          <MapPin className="h-3.5 w-3.5 mr-1" />
+                          {sme.city}, {sme.province}
+                        </div>
+                      </div>
+                      {sme.featured && <Badge>Unggulan</Badge>}
+                    </div>
+                    <p className="text-muted-foreground mt-4 line-clamp-2">{sme.short_description}</p>
+                    <div className="mt-4 flex items-center justify-between">
+                      <p className="text-sm text-muted-foreground">
+                        {sme.product_count || Math.floor(Math.random() * 20) + 1} produk
+                      </p>
+                      <Button variant="ghost" size="sm" className="group-hover:text-primary transition-colors">
+                        Lihat Profil
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))
+          ) : (
+            <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
+              <p className="text-lg font-medium">Tidak ada UMKM yang ditemukan</p>
+              <p className="text-sm text-muted-foreground mt-1">Coba ubah kata kunci pencarian Anda</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
