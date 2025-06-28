@@ -44,13 +44,15 @@ export default function SMEsPage() {
       return
     }
 
-    const filtered = allSMEs.filter(
-      (sme) =>
-        sme.name.toLowerCase().includes(query) ||
-        sme.short_description.toLowerCase().includes(query) ||
-        sme.city.toLowerCase().includes(query) ||
-        sme.province.toLowerCase().includes(query)
-    )
+    const filtered = allSMEs.filter((sme) => {
+      const name = sme.name?.toLowerCase() || ""
+      const desc = sme.short_description?.toLowerCase() || ""
+      const city = sme.city?.toLowerCase() || ""
+      const province = sme.province?.toLowerCase() || ""
+
+      return name.includes(query) || desc.includes(query) || city.includes(query) || province.includes(query)
+    })
+
 
     setFilteredSMEs(filtered.sort(sortSMEs(sortBy)))
   }

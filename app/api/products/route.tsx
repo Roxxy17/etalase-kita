@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { supabase } from '@/lib/supabase'
 
 // Supabase admin client (gunakan service role key)
 const supabaseAdmin = createClient(
@@ -37,19 +38,24 @@ export async function POST(req: Request) {
 
   return NextResponse.json(insertData[0], { status: 201 })
 }
-export async function GET() {
-  try {
-    const { data, error } = await supabaseAdmin
-      .from('products')
-      .select('*')
-      .order('created_at', { ascending: false }); // opsional: urutkan dari terbaru
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url)
+  const smeId = searchParams.get('smeId')
+  const category = searchParams.get("category")
+  let query = supabase.from('products').select('*')
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    return NextResponse.json(data, { status: 200 });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  if (smeId) {
+    query = query.eq('sme_id', smeId)
   }
+  if (category) {
+    query = query.eq("category_slug", category)
+  }
+
+  const { data, error } = await query
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  return NextResponse.json(data)
 }

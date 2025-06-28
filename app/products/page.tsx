@@ -10,15 +10,40 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
-
-import { products, categories, smes } from "@/lib/data"
 import ProductCard from "@/components/product-card"
+
+interface Product {
+  id: number
+  name: string
+  description: string
+  price: number
+  image?: string
+  categorySlug: string
+  smeId: number
+  featured?: boolean
+  createdAt: string
+}
+
+interface Category {
+  id: number
+  name: string
+  slug: string
+}
+
+interface SME {
+  id: number
+  name: string
+  city?: string
+}
 
 export default function ProductsPage() {
   const searchParams = useSearchParams()
   const initialCategory = searchParams.get("category") || ""
 
-  const [filteredProducts, setFilteredProducts] = useState(products)
+  const [products, setProducts] = useState<Product[]>([])
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
+  const [smes, setSMEs] = useState<SME[]>([])
   const [selectedCategories, setSelectedCategories] = useState<string[]>(initialCategory ? [initialCategory] : [])
   const [selectedSMEs, setSelectedSMEs] = useState<string[]>([])
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 5000000])
@@ -26,30 +51,80 @@ export default function ProductsPage() {
   const [searchQuery, setSearchQuery] = useState("")
 
   useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const params = new URLSearchParams()
+        if (selectedCategories.length === 1) params.append("category", selectedCategories[0])
+        if (selectedSMEs.length === 1) params.append("smeId", selectedSMEs[0])
+
+        const res = await fetch(`/api/products?${params.toString()}`)
+        const raw = await res.json()
+
+        const data: Product[] = raw.map((item: any) => ({
+          id: item.id,
+          name: item.name,
+          description: item.description ?? "",
+          price: item.price,
+          image: item.image,
+          categorySlug: item.category_slug,
+          smeId: item.sme_id,
+          featured: item.featured,
+          createdAt: item.created_at,
+        }))
+
+        setProducts(data)
+      } catch (err) {
+        console.error("Gagal fetch produk:", err)
+      }
+    }
+
+    fetchProducts()
+  }, [selectedCategories, selectedSMEs])
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const res = await fetch("/api/categories")
+      const raw = await res.json()
+      const data: Category[] = raw.map((item: any) => ({
+        id: item.id,
+        name: item.name,
+        slug: item.slug,
+      }))
+      setCategories(data)
+    }
+
+    const fetchSMEs = async () => {
+      const res = await fetch("/api/smes")
+      const raw = await res.json()
+      const data: SME[] = raw.map((item: any) => ({
+        id: item.id,
+        name: item.name,
+        city: item.city,
+      }))
+      setSMEs(data)
+    }
+
+    fetchCategories()
+    fetchSMEs()
+  }, [])
+
+  useEffect(() => {
     let result = [...products]
 
-    // Filter by search query
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
       result = result.filter(
-        (product) => product.name.toLowerCase().includes(query) || product.description.toLowerCase().includes(query),
+        (product) =>
+          product.name.toLowerCase().includes(query) ||
+          product.description.toLowerCase().includes(query)
       )
     }
 
-    // Filter by categories
-    if (selectedCategories.length > 0) {
-      result = result.filter((product) => selectedCategories.includes(product.categorySlug))
-    }
+    result = result.filter(
+      (product) =>
+        product.price >= priceRange[0] && product.price <= priceRange[1]
+    )
 
-    // Filter by SMEs
-    if (selectedSMEs.length > 0) {
-      result = result.filter((product) => selectedSMEs.includes(product.smeId.toString()))
-    }
-
-    // Filter by price range
-    result = result.filter((product) => product.price >= priceRange[0] && product.price <= priceRange[1])
-
-    // Sort products
     switch (sortBy) {
       case "newest":
         result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
@@ -72,16 +147,18 @@ export default function ProductsPage() {
     }
 
     setFilteredProducts(result)
-  }, [selectedCategories, selectedSMEs, priceRange, sortBy, searchQuery])
+  }, [products, searchQuery, priceRange, sortBy])
 
   const handleCategoryChange = (categorySlug: string) => {
     setSelectedCategories((prev) =>
-      prev.includes(categorySlug) ? prev.filter((c) => c !== categorySlug) : [...prev, categorySlug],
+      prev.includes(categorySlug) ? prev.filter((c) => c !== categorySlug) : [...prev, categorySlug]
     )
   }
 
   const handleSMEChange = (smeId: string) => {
-    setSelectedSMEs((prev) => (prev.includes(smeId) ? prev.filter((id) => id !== smeId) : [...prev, smeId]))
+    setSelectedSMEs((prev) =>
+      prev.includes(smeId) ? prev.filter((id) => id !== smeId) : [...prev, smeId]
+    )
   }
 
   return (
@@ -207,7 +284,9 @@ export default function ProductsPage() {
         {/* Product Grid */}
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">Menampilkan {filteredProducts.length} produk</p>
+            <p className="text-sm text-muted-foreground">
+              Menampilkan {filteredProducts.length} produk
+            </p>
           </div>
 
           {filteredProducts.length > 0 ? (
@@ -219,7 +298,9 @@ export default function ProductsPage() {
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <p className="text-lg font-medium">Tidak ada produk yang ditemukan</p>
-              <p className="text-sm text-muted-foreground mt-1">Coba ubah filter atau kata kunci pencarian Anda</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Coba ubah filter atau kata kunci pencarian Anda
+              </p>
             </div>
           )}
         </div>
