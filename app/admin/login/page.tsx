@@ -27,8 +27,7 @@ export default function AdminLoginPage() {
     const checkLogin = async () => {
       const { data } = await supabase.auth.getSession();
       if (data.session) {
-
-        router.push('/admin/login');
+        router.push('/admin/dashboard'); // Jika sudah login, alihkan ke dashboard
       }
     };
     checkLogin();
@@ -48,7 +47,6 @@ export default function AdminLoginPage() {
     if (error) {
       setMessage(error.message);
     } else {
-
       router.push('/admin/dashboard');
     }
   }

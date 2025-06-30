@@ -79,13 +79,20 @@ export default function ProductsManagement() {
           smesRes.json(),
         ]);
 
-        console.log("Produk:", productsData);
-        console.log("Kategori:", categoriesData);
-        console.log("UMKM:", smesData);
+        // 🔥 Sort produk berdasarkan waktu terbaru (created_at descending)
+        const sortedProducts = [...productsData].sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
 
-        setProducts(productsData);
+        const sortedSMEs = [...smesData].sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+
+        setProducts(sortedProducts);
         setCategories(categoriesData);
-        setSmes(smesData);
+        setSmes(sortedSMEs);
       } catch (error) {
         console.error("Gagal mengambil data:", error);
       } finally {
