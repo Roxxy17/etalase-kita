@@ -12,7 +12,8 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "EtalaseKita - Showcase UMKM Kreatif Lokal",
   description:
-    "Platform showcase kolektif untuk menampilkan produk dan profil UMKM kreatif lokal dalam satu platform digital yang estetik dan profesional."
+    "Platform showcase kolektif untuk menampilkan produk dan profil UMKM kreatif lokal dalam satu platform digital yang estetik dan profesional.",
+    generator: 'v0.dev'
 }
 
 export default function RootLayout({
@@ -25,9 +26,9 @@ export default function RootLayout({
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <div className="flex flex-col min-h-screen">
-            {/* <Header /> */}
+            <Header />
             <main className="flex-1">{children}</main>
-            {/* <Footer /> */}
+            <Footer />
           </div>
         </ThemeProvider>
         <ScrollAnimationScript />
