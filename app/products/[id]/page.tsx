@@ -1,50 +1,56 @@
-import Image from "next/image"
-import Link from "next/link"
-import { notFound } from "next/navigation"
-import { MapPin } from "lucide-react"
+import Image from "next/image";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { MapPin } from "lucide-react";
 
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import ProductCard from "@/components/product-card"
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import ProductCard from "@/components/product-card";
 
-const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://etalasekita.vercel.app"
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://etalasekita.vercel.app";
 
 async function getProduct(id: string) {
-  const res = await fetch(`${baseUrl}/api/products/${id}`, { cache: "no-store" })
-  if (!res.ok) return null
-  return res.json()
+  const res = await fetch(`${baseUrl}/api/products/${id}`, { cache: "no-store" });
+  if (!res.ok) return null;
+
+  const json = await res.json();
+  return json.data || null;
 }
 
 async function getSME(id: string) {
-  const res = await fetch(`${baseUrl}/api/smes/${id}`, { cache: "no-store" })
-  if (!res.ok) return null
-  return res.json()
+  const res = await fetch(`${baseUrl}/api/smes/${id}`, { cache: "no-store" });
+  if (!res.ok) return null;
+
+  const json = await res.json();
+  return json.data || null;
 }
 
 async function getCategory(slug: string) {
-  const res = await fetch(`${baseUrl}/api/categories?slug=${slug}`, { cache: "no-store" })
-  if (!res.ok) return null
-  const data = await res.json()
-  return data.length > 0 ? data[0] : null
+  const res = await fetch(`${baseUrl}/api/categories?slug=${slug}`, { cache: "no-store" });
+  if (!res.ok) return null;
+
+  const json = await res.json();
+  return json.length > 0 ? json[0] : null;
 }
 
 async function getRelatedProducts(categorySlug: string, currentId: string) {
-  const res = await fetch(`${baseUrl}/api/products?categorySlug=${categorySlug}`, { cache: "no-store" })
-  if (!res.ok) return []
-  const data = await res.json()
-  return data.filter((p: any) => p.id !== currentId).slice(0, 4)
+  const res = await fetch(`${baseUrl}/api/products?categorySlug=${categorySlug}`, { cache: "no-store" });
+  if (!res.ok) return [];
+
+  const json = await res.json();
+  return json.filter((p: any) => p.id !== currentId).slice(0, 4);
 }
 
 export default async function ProductPage({ params }: { params: { id: string } }) {
-  const product = await getProduct(params.id)
-  if (!product) notFound()
+  const product = await getProduct(params.id);
+  if (!product) return notFound();
 
   const [sme, category, relatedProducts] = await Promise.all([
     getSME(product.sme_id),
     getCategory(product.category_slug),
     getRelatedProducts(product.category_slug, product.id),
-  ])
+  ]);
 
   return (
     <div className="container px-4 py-8 md:px-6 md:py-12">
@@ -158,14 +164,12 @@ export default async function ProductPage({ params }: { params: { id: string } }
         <div className="mt-16">
           <h2 className="text-2xl font-bold mb-6">Produk Terkait</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {relatedProducts.map((product: any) => (
-              <ProductCard key={product.id} product={product} />
+            {relatedProducts.map((p: any) => (
+              <ProductCard key={p.id} product={p} />
             ))}
           </div>
         </div>
       )}
     </div>
-  )
+  );
 }
-
-// kintil
