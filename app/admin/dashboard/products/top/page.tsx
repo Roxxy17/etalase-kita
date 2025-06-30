@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/table";
 
 export default function ProductsManagement() {
+  const [sessionChecked, setSessionChecked] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedSME, setSelectedSME] = useState("all");
@@ -66,6 +67,7 @@ export default function ProductsManagement() {
         return;
       }
 
+      setSessionChecked(true); // ✅ Sesi valid
       try {
         setLoading(true);
 
@@ -81,7 +83,6 @@ export default function ProductsManagement() {
           smesRes.json(),
         ]);
 
-        // 🔥 Sort produk berdasarkan waktu terbaru (created_at descending)
         const sortedProducts = [...productsData].sort(
           (a, b) =>
             new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
@@ -104,6 +105,14 @@ export default function ProductsManagement() {
 
     fetchData();
   }, [router]);
+
+  if (!sessionChecked) {
+    return (
+      <p className="w-full bg-gradient-to-r from-gold-500 to-gold-600 text-white py-3 font-semibold text-center shadow">
+        Mengecek sesi login...
+      </p>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

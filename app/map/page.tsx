@@ -1,8 +1,7 @@
 "use client"
 
 import type React from "react"
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import dynamic from "next/dynamic"
 import { Search, MapPin } from "lucide-react"
 
@@ -10,8 +9,6 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-
-import { smes } from "@/lib/data"
 
 // Dynamically import the Map component to avoid SSR issues with Leaflet
 const MapWithNoSSR = dynamic(() => import("@/components/map"), {
@@ -24,9 +21,25 @@ const MapWithNoSSR = dynamic(() => import("@/components/map"), {
 })
 
 export default function MapPage() {
+  const [smes, setSMEs] = useState<any[]>([])
   const [searchQuery, setSearchQuery] = useState("")
-  const [filteredSMEs, setFilteredSMEs] = useState(smes)
-  const [selectedSME, setSelectedSME] = useState<(typeof smes)[0] | null>(null)
+  const [filteredSMEs, setFilteredSMEs] = useState<any[]>([])
+  const [selectedSME, setSelectedSME] = useState<any | null>(null)
+
+  useEffect(() => {
+    const fetchSMEs = async () => {
+      try {
+        const res = await fetch("/api/smes")
+        const data = await res.json()
+        setSMEs(data)
+        setFilteredSMEs(data)
+      } catch (error) {
+        console.error("Gagal mengambil data UMKM:", error)
+      }
+    }
+
+    fetchSMEs()
+  }, [])
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value.toLowerCase()
@@ -40,9 +53,9 @@ export default function MapPage() {
     const filtered = smes.filter(
       (sme) =>
         sme.name.toLowerCase().includes(query) ||
-        sme.shortDescription.toLowerCase().includes(query) ||
-        sme.city.toLowerCase().includes(query) ||
-        sme.province.toLowerCase().includes(query),
+        sme.short_description?.toLowerCase().includes(query) ||
+        sme.city?.toLowerCase().includes(query) ||
+        sme.province?.toLowerCase().includes(query)
     )
 
     setFilteredSMEs(filtered)
@@ -73,7 +86,9 @@ export default function MapPage() {
               {filteredSMEs.map((sme) => (
                 <Card
                   key={sme.id}
-                  className={`cursor-pointer transition-colors ${selectedSME?.id === sme.id ? "border-primary" : ""}`}
+                  className={`cursor-pointer transition-colors ${
+                    selectedSME?.id === sme.id ? "border-primary" : ""
+                  }`}
                   onClick={() => setSelectedSME(sme)}
                 >
                   <CardContent className="p-3">
@@ -92,7 +107,9 @@ export default function MapPage() {
                         <p className="text-xs text-muted-foreground mt-1 truncate">
                           {sme.city}, {sme.province}
                         </p>
-                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{sme.shortDescription}</p>
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                          {sme.short_description}
+                        </p>
                       </div>
                     </div>
                   </CardContent>
@@ -109,7 +126,11 @@ export default function MapPage() {
 
         {/* Map */}
         <div className="order-1 md:order-2">
-          <MapWithNoSSR smes={filteredSMEs} selectedSME={selectedSME} setSelectedSME={setSelectedSME} />
+          <MapWithNoSSR
+            smes={filteredSMEs}
+            selectedSME={selectedSME}
+            setSelectedSME={setSelectedSME}
+          />
         </div>
       </div>
     </div>

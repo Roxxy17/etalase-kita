@@ -1,154 +1,213 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import { MapPin, Search, Edit, Plus } from "lucide-react"
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { MapPin, Search, Edit, Save } from "lucide-react";
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { supabase } from "@/lib/supabase";
 
-import { smes } from "@/lib/data"
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Map from "@/components/map";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
 
 export default function MapManagement() {
-  const [searchQuery, setSearchQuery] = useState("")
+  const router = useRouter();
 
-  const filteredSMEs = smes.filter((sme) => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [smes, setSmes] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [editingSME, setEditingSME] = useState<any | null>(null);
+  const [draftLat, setDraftLat] = useState<string>("");
+  const [draftLng, setDraftLng] = useState<string>("");
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) {
+        router.push("/admin/login");
+        return;
+      }
+      await fetchSMEs();
+      setAuthLoading(false);
+    })();
+  }, [router]);
+
+  async function fetchSMEs() {
+    setLoading(true);
+    const res = await fetch("/api/smes");
+    const data = await res.json();
+    setSmes(data);
+    setLoading(false);
+  }
+
+  const startEdit = (sme: any) => {
+    setEditingSME(sme);
+    setDraftLat(String(sme.latitude));
+    setDraftLng(String(sme.longitude));
+  };
+
+  const saveEdit = async () => {
+    if (!editingSME) return;
+    const res = await fetch(`/api/smes/${editingSME.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        latitude: parseFloat(draftLat),
+        longitude: parseFloat(draftLng),
+      }),
+    });
+    if (res.ok) {
+      await fetchSMEs();
+      setEditingSME(null);
+    } else {
+      alert("Gagal menyimpan lokasi");
+    }
+  };
+
+  const filtered = smes.filter((s) => {
+    const name = s.name?.toLowerCase() || "";
+    const city = s.city?.toLowerCase() || "";
+    const province = s.province?.toLowerCase() || "";
+    const query = searchQuery.toLowerCase();
+
     return (
-      sme.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      sme.city.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  })
+      name.includes(query) || city.includes(query) || province.includes(query)
+    );
+  });
+
+  if (authLoading || loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <p className="animate-pulse text-gray-500">Memuat data…</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">Manajemen Peta</h1>
-              <p className="text-sm text-gray-500">Kelola lokasi UMKM di peta</p>
-            </div>
-            <div className="flex items-center gap-4">
-              <Link href="/admin/dashboard">
-                <Button variant="outline">Kembali ke Dashboard</Button>
-              </Link>
-              <Button className="bg-purple-500 hover:bg-purple-600">
-                <Plus className="h-4 w-4 mr-2" />
-                Tambah Lokasi
-              </Button>
-            </div>
+      <header className="bg-white border-b shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+          <div>
+            <h1 className="text-xl font-bold">Manajemen Peta</h1>
+            <p className="text-sm text-gray-600">Kelola lokasi UMKM</p>
           </div>
+          <Link href="/admin/dashboard">
+            <Button variant="outline">Dashboard</Button>
+          </Link>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto p-4 space-y-6">
         {/* Search */}
-        <Card className="mb-6">
+        <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Pencarian Lokasi</CardTitle>
+            <CardTitle>Pencarian Lokasi</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 w-full">
+              <div className="relative flex-1 w-full">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                 <Input
-                  placeholder="Cari UMKM berdasarkan nama atau lokasi..."
+                  className="pl-10 w-full h-10"
+                  placeholder="Cari nama, kota, atau provinsi…"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
                 />
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600">{filteredSMEs.length} lokasi ditemukan</span>
-              </div>
+              <span className="text-sm text-gray-600 whitespace-nowrap sm:self-center self-end">
+                {filtered.length} lokasi ditemukan
+              </span>
             </div>
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Map Preview */}
-          <Card>
+        {/* Map & List */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Map */}
+          <Card className="lg:col-span-2 h-[600px]">
             <CardHeader>
-              <CardTitle>Preview Peta</CardTitle>
+              <CardTitle>Peta UMKM</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="aspect-[4/3] bg-gray-100 rounded-lg flex items-center justify-center">
-                <div className="text-center">
-                  <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                  <p className="text-gray-600">Preview Peta Interaktif</p>
-                  <p className="text-sm text-gray-500">Akan menampilkan lokasi UMKM</p>
-                </div>
-              </div>
+            <CardContent className="p-0 h-full overflow-hidden relative z-0 rounded-b-xl">
+              <Map smes={filtered} selectedSME={null} setSelectedSME={() => {}} />
             </CardContent>
           </Card>
 
-          {/* Location List */}
-          <Card>
+          {/* List */}
+          <Card className="h-[670px] flex flex-col">
             <CardHeader>
-              <CardTitle>Daftar Lokasi UMKM</CardTitle>
+              <CardTitle>Daftar Lokasi</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4 max-h-96 overflow-y-auto">
-                {filteredSMEs.map((sme) => (
-                  <div key={sme.id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                      <div>
-                        <p className="font-medium text-gray-900">{sme.name}</p>
-                        <p className="text-sm text-gray-500 flex items-center gap-1">
-                          <MapPin className="h-3 w-3" />
-                          {sme.city}, {sme.province}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {sme.featured && <Badge className="bg-purple-100 text-purple-800">Unggulan</Badge>}
-                      <Button size="sm" variant="outline">
-                        <Edit className="h-4 w-4" />
-                      </Button>
+            <CardContent className="overflow-y-auto flex-1 space-y-2">
+              {filtered.map((s) => (
+                <div
+                  key={s.id}
+                  className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-purple-600 rounded-full" />
+                    <div>
+                      <p className="font-medium">{s.name}</p>
+                      <p className="text-sm text-gray-500 flex items-center gap-1">
+                        <MapPin className="h-3 w-3" /> {s.city}, {s.province}
+                      </p>
                     </div>
                   </div>
-                ))}
-              </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => startEdit(s)}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
             </CardContent>
           </Card>
         </div>
+      </main>
 
-        {/* Statistics */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-          <Card>
-            <CardContent className="p-6 text-center">
-              <p className="text-2xl font-bold text-purple-600">{smes.length}</p>
-              <p className="text-sm text-gray-600">Total Lokasi</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6 text-center">
-              <p className="text-2xl font-bold text-green-600">
-                {smes.filter((s) => s.province === "DI Yogyakarta").length}
-              </p>
-              <p className="text-sm text-gray-600">Yogyakarta</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6 text-center">
-              <p className="text-2xl font-bold text-blue-600">
-                {smes.filter((s) => s.province === "Jawa Tengah").length}
-              </p>
-              <p className="text-sm text-gray-600">Jawa Tengah</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6 text-center">
-              <p className="text-2xl font-bold text-gold-600">{smes.filter((s) => s.featured).length}</p>
-              <p className="text-sm text-gray-600">Lokasi Unggulan</p>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+      {/* Modal Edit Lokasi */}
+      <Dialog open={!!editingSME} onOpenChange={() => setEditingSME(null)}>
+        <DialogContent className="max-w-md w-full sm:rounded-lg z-[50] bg-white shadow-lg border">
+          <DialogHeader>
+            <DialogTitle>Edit Lokasi</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <Input
+              placeholder="Latitude"
+              value={draftLat}
+              onChange={(e) => setDraftLat(e.target.value)}
+            />
+            <Input
+              placeholder="Longitude"
+              value={draftLng}
+              onChange={(e) => setDraftLng(e.target.value)}
+            />
+          </div>
+          <DialogFooter className="mt-4">
+            <DialogClose asChild>
+              <Button variant="ghost">Batal</Button>
+            </DialogClose>
+            <Button onClick={saveEdit} className="bg-purple-600 text-white">
+              <Save className="h-4 w-4 mr-2" /> Simpan
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
-  )
+  );
 }

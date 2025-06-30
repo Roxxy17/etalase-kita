@@ -4,6 +4,10 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Plus, Search, MapPin, Edit, Trash2, Eye, Star } from "lucide-react";
+// Adjust the import based on your auth utility
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase"; // Adjust the import based on your Supabase setup
+
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,9 +26,12 @@ export default function SMEsManagement() {
   const [searchQuery, setSearchQuery] = useState("");
   const [smes, setSmes] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
-
+  const [adminUser, setAdminUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
   // Fetch data from API
   useEffect(() => {
+    
     const fetchData = async () => {
       const [smeRes, productRes] = await Promise.all([
         fetch("/api/smes"),
@@ -39,7 +46,7 @@ export default function SMEsManagement() {
       setSmes(smeData);
       setProducts(productData);
     };
-
+    checkSession();
     fetchData();
   }, []);
 
@@ -54,6 +61,16 @@ export default function SMEsManagement() {
       province.includes(searchQuery.toLowerCase())
     );
   });
+
+  const checkSession = async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        router.push("/admin/login");
+      } else {
+        setAdminUser(sessionData.session.user);
+      }
+      setLoading(false);
+    };
 
   const getSMEProductCount = (smeId: number) => {
     return products.filter((p) => p.sme_id === smeId).length;

@@ -4,13 +4,24 @@ import { useEffect, useRef } from "react"
 import L from "leaflet"
 import "leaflet/dist/leaflet.css"
 
-// Define the SME type to match our data structure
+// Marker icon langsung dari CDN (tanpa perlu file lokal)
+const pinIcon = L.icon({
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [0, -41],
+})
+
 interface SME {
   id: number
   name: string
   city: string
   province: string
-  shortDescription: string
+  short_description: string
+  latitude: number
+  longitude: number
   featured?: boolean
 }
 
@@ -25,53 +36,48 @@ export default function Map({ smes, selectedSME, setSelectedSME }: MapProps) {
   const markersRef = useRef<{ [key: number]: L.Marker }>({})
 
   useEffect(() => {
-    // Generate random coordinates for each SME (since we don't have real coordinates)
-    const smeWithCoords = smes.map((sme) => ({
-      ...sme,
-      lat: -6.2 + Math.random() * 10 - 5, // Random coordinates around Indonesia
-      lng: 106.8 + Math.random() * 10 - 5,
-    }))
-
-    // Initialize map if it doesn't exist
+    // Inisialisasi map jika belum dibuat
     if (!mapRef.current) {
-      mapRef.current = L.map("map").setView([-2.5, 118], 5) // Center on Indonesia
+      mapRef.current = L.map("map").setView([-2.5, 118], 5) // Tengah Indonesia
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        attribution:
+          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       }).addTo(mapRef.current)
     }
 
-    // Clear existing markers
-    Object.values(markersRef.current).forEach((marker) => {
-      marker.remove()
-    })
+    // Hapus semua marker lama
+    Object.values(markersRef.current).forEach((marker) => marker.remove())
     markersRef.current = {}
 
-    // Add markers for each SME
-    smeWithCoords.forEach((sme) => {
-      const marker = L.marker([sme.lat, sme.lng])
-        .addTo(mapRef.current!)
-        .bindPopup(
-          `<strong>${sme.name}</strong><br>${sme.city}, ${sme.province}<br><small>${sme.shortDescription}</small>`,
-        )
-        .on("click", () => {
-          setSelectedSME(sme)
-        })
+    // Tambahkan marker baru untuk setiap SME
+    smes.forEach((sme) => {
+      if (
+        typeof sme.latitude === "number" &&
+        typeof sme.longitude === "number" &&
+        !isNaN(sme.latitude) &&
+        !isNaN(sme.longitude)
+      ) {
+        const marker = L.marker([sme.latitude, sme.longitude], { icon: pinIcon })
+          .addTo(mapRef.current!)
+          .bindPopup(`
+            <strong>${sme.name ?? "Tanpa Nama"}</strong><br>
+            ${sme.city ?? "Tanpa Kota"}, ${sme.province ?? "Tanpa Provinsi"}<br>
+            <small>${sme.short_description ?? "Tidak ada deskripsi"}</small>
+          `)
+          .on("click", () => setSelectedSME(sme))
 
-      markersRef.current[sme.id] = marker
+        markersRef.current[sme.id] = marker
+      }
     })
 
-    // If there's a selected SME, open its popup
+    // Fokuskan ke marker terpilih
     if (selectedSME && markersRef.current[selectedSME.id]) {
       const marker = markersRef.current[selectedSME.id]
       marker.openPopup()
-      mapRef.current.setView(marker.getLatLng(), 10)
-    }
-
-    return () => {
-      // No need to clean up as we're keeping the map instance
+      mapRef.current.setView(marker.getLatLng(), 13)
     }
   }, [smes, selectedSME, setSelectedSME])
 
-  return <div id="map" className="w-full h-[600px] rounded-lg border" />
+  return <div id="map" className="w-full min-h-[500px] h-full rounded-lg border" />;
 }

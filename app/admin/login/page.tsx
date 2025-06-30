@@ -82,14 +82,14 @@ export default function AdminLoginPage() {
 
             <div className="space-y-2">
               <Label htmlFor="username" className="text-midnight-700 font-medium">
-                Username
+                Email
               </Label>
               <Input
                 id="username"
                 type="text"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Masukkan username"
+                placeholder="Masukkan email"
                 className="border-midnight-200 focus:border-gold-500 focus:ring-gold-500"
                 required
               />
@@ -136,11 +136,11 @@ export default function AdminLoginPage() {
 
           <div className="mt-6 p-4 bg-midnight-50 rounded-lg">
             <p className="text-xs text-midnight-600 text-center">
-              <strong>Demo Credentials:</strong>
+              <strong>hehe ini sayang password Demo Credentials:</strong>
               <br />
-              Username: admin
+              Username: admin@gmail.com
               <br />
-              Password: etalasekita2024
+              Password: 123admin
             </p>
           </div>
         </CardContent>

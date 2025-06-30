@@ -40,10 +40,8 @@ export default function ProductsManagement() {
 
   const filteredProducts = products.filter((product) => {
     const matchesSearch =
-      (product.name?.toLowerCase().includes(searchQuery.toLowerCase()) ??
-        false) ||
-      (product.description?.toLowerCase().includes(searchQuery.toLowerCase()) ??
-        false);
+      (product.name?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
+      (product.description?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
 
     const matchesCategory =
       selectedCategory === "all" ||
@@ -79,20 +77,20 @@ export default function ProductsManagement() {
           smesRes.json(),
         ]);
 
-        // 🔥 Sort produk berdasarkan waktu terbaru (created_at descending)
-        const sortedProducts = [...productsData].sort(
-          (a, b) =>
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        // 🔥 Sort produk dan UMKM berdasarkan tanggal terbaru
+        setProducts(
+          [...productsData].sort(
+            (a, b) =>
+              new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          )
         );
-
-        const sortedSMEs = [...smesData].sort(
-          (a, b) =>
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
-
-        setProducts(sortedProducts);
         setCategories(categoriesData);
-        setSmes(sortedSMEs);
+        setSmes(
+          [...smesData].sort(
+            (a, b) =>
+              new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          )
+        );
       } catch (error) {
         console.error("Gagal mengambil data:", error);
       } finally {
@@ -102,6 +100,14 @@ export default function ProductsManagement() {
 
     fetchData();
   }, [router]);
+
+  if (loading) {
+    return (
+      <p className="w-full bg-gradient-to-r from-gold-500 to-gold-600 text-white py-3 font-semibold text-center shadow">
+        Memuat data produk dan UMKM...
+      </p>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

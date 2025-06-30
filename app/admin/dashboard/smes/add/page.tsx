@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Save } from "lucide-react";
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,11 +10,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-
 import { supabase } from "@/lib/supabase";
 
 export default function AddSME() {
   const router = useRouter();
+  const [adminUser, setAdminUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
   const [formData, setFormData] = useState({
     name: "",
     short_description: "",
@@ -40,6 +41,19 @@ export default function AddSME() {
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        router.push("/admin/login");
+      } else {
+        setAdminUser(sessionData.session.user);
+      }
+      setLoading(false);
+    };
+    checkSession();
+  }, [router]);
+
   const handleInputChange = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
@@ -56,7 +70,6 @@ export default function AddSME() {
       }
 
       const form = new FormData();
-
       Object.entries(formData).forEach(([key, value]) => {
         if (key === "logo" || key === "cover_image") {
           if (value instanceof File) {
@@ -89,6 +102,14 @@ export default function AddSME() {
     }
   };
 
+  if (loading) {
+    return (
+      <p className="w-full bg-gradient-to-r from-gold-500 to-gold-600 text-white py-3 font-semibold text-center shadow">
+        Memuat...
+      </p>
+    );
+  }
+  
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-200 shadow-sm">
