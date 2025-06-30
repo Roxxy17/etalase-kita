@@ -1,3 +1,4 @@
+
 "use client"
 
 import type React from "react"
@@ -21,10 +22,12 @@ export default function AdminLoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false);
 
+
   useEffect(() => {
     const checkLogin = async () => {
       const { data } = await supabase.auth.getSession();
       if (data.session) {
+
         router.push('/admin/login');
       }
     };
@@ -32,8 +35,10 @@ export default function AdminLoginPage() {
   }, [router]);
 
   const handleLogin = async (e: React.FormEvent) => {
+
     e.preventDefault()
     setIsLoading(true);
+
 
     const { error } = await supabase.auth.signInWithPassword({
       email,
@@ -43,6 +48,7 @@ export default function AdminLoginPage() {
     if (error) {
       setMessage(error.message);
     } else {
+
       router.push('/admin/dashboard');
     }
   }
@@ -142,5 +148,5 @@ export default function AdminLoginPage() {
         </CardContent>
       </Card>
     </div>
-  )
+)
 }

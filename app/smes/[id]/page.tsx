@@ -7,24 +7,36 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 
-import { smes, products } from "@/lib/data"
 import ProductCard from "@/components/product-card"
 
-export default function SMEPage({ params }: { params: { id: string } }) {
-  const sme = smes.find((s) => s.id.toString() === params.id)
+async function getSME(id: string) {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/smes/${id}`, {
+    cache: "no-store",
+  })
+  if (!res.ok) return null
+  return res.json()
+}
 
-  if (!sme) {
-    notFound()
-  }
+async function getProductsBySME(id: string) {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/products?smeId=${id}`, {
+    cache: "no-store",
+  })
+  if (!res.ok) return []
+  return res.json()
+}
 
-  const smeProducts = products.filter((p) => p.smeId.toString() === params.id)
+export default async function SMEPage({ params }: { params: { id: string } }) {
+  const sme = await getSME(params.id)
+  if (!sme) notFound()
+
+  const smeProducts = await getProductsBySME(params.id)
 
   return (
     <div>
       {/* Cover Image */}
       <div className="w-full h-48 md:h-64 lg:h-80 relative">
         <Image
-          src={sme.coverImage || "/placeholder.svg?height=300&width=1200"}
+          src={sme.cover_image || "/placeholder.svg?height=300&width=1200"}
           alt={`${sme.name} cover`}
           fill
           className="object-cover"
@@ -94,7 +106,7 @@ export default function SMEPage({ params }: { params: { id: string } }) {
           <TabsContent value="products" className="py-6">
             {smeProducts.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {smeProducts.map((product) => (
+                {smeProducts.map((product: any) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
               </div>
@@ -112,7 +124,7 @@ export default function SMEPage({ params }: { params: { id: string } }) {
               <div className="md:col-span-2 space-y-6">
                 <div>
                   <h2 className="text-xl font-semibold mb-4">Tentang {sme.name}</h2>
-                  <p className="text-muted-foreground">{sme.description || sme.shortDescription}</p>
+                  <p className="text-muted-foreground">{sme.description || sme.short_description}</p>
                 </div>
 
                 {sme.story && (
@@ -129,7 +141,7 @@ export default function SMEPage({ params }: { params: { id: string } }) {
                   <div className="space-y-3">
                     <div>
                       <p className="text-sm text-muted-foreground">Tahun Berdiri</p>
-                      <p>{new Date(sme.establishedDate).getFullYear()}</p>
+                      <p>{new Date(sme.established_date).getFullYear()}</p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Kategori</p>

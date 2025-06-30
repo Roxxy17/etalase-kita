@@ -1,5 +1,8 @@
+
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+
+import { NextResponse } from 'next/server';
+
 
 export async function GET(
   req: Request,
@@ -19,6 +22,7 @@ export async function GET(
 
   return NextResponse.json(data);
 }
+
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   const id = params.id
   const body = await req.json()
@@ -55,3 +59,4 @@ export async function DELETE(
 
   return NextResponse.json({ message: 'Product deleted successfully' })
 }
+
