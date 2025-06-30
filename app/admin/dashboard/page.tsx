@@ -98,7 +98,7 @@ export default function AdminDashboard() {
       description: "Produk featured",
       icon: <TrendingUp className="h-6 w-6" />,
       color: "from-gold-500 to-gold-600",
-      href: "/admin/dashboard/products",
+      href: "/admin/dashboard/products/top",
     },
     {
       title: "Lokasi Peta",
