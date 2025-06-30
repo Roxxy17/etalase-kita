@@ -64,7 +64,7 @@ export async function POST(req: Request) {
         image: imageUrl,
         category_slug,
         sme_id,
-        featured
+        featured,
       }])
       .select()
 

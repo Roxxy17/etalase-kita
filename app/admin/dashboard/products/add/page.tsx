@@ -22,6 +22,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/lib/supabase";
 
 export default function AddProduct() {
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
   const [formData, setFormData] = useState({
     name: "",
@@ -39,23 +40,35 @@ export default function AddProduct() {
   const [smes, setSmes] = useState<any[]>([]);
 
   React.useEffect(() => {
-    const fetchOptions = async () => {
-      const [catRes, smeRes] = await Promise.all([
-        fetch("/api/categories"),
-        fetch("/api/smes"),
-      ]);
+    const checkSessionAndFetch = async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        router.push("/admin/login");
+        return;
+      }
 
-      const [catData, smeData] = await Promise.all([
-        catRes.json(),
-        smeRes.json(),
-      ]);
+      try {
+        const [catRes, smeRes] = await Promise.all([
+          fetch("/api/categories"),
+          fetch("/api/smes"),
+        ]);
 
-      setCategories(catData);
-      setSmes(smeData);
+        const [catData, smeData] = await Promise.all([
+          catRes.json(),
+          smeRes.json(),
+        ]);
+
+        setCategories(catData);
+        setSmes(smeData);
+      } catch (error) {
+        console.error("Gagal mengambil kategori atau UMKM", error);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    fetchOptions();
-  }, []);
+    checkSessionAndFetch();
+  }, [router]);
 
   const handleInputChange = (field: string, value: any) => {
     setFormData((prev) => ({
@@ -110,6 +123,14 @@ export default function AddProduct() {
     } finally {
       setIsLoading(false);
     }
+
+    if (loading) {
+      return (
+        <p className="w-full bg-gradient-to-r from-gold-500 to-gold-600 text-white py-3 font-semibold text-center shadow">
+          Mengecek sesi login...
+        </p>
+      );
+    }
   };
 
   return (
@@ -123,8 +144,12 @@ export default function AddProduct() {
                 Kembali
               </Button>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">Tambah Produk Baru</h1>
-                <p className="text-sm text-gray-500">Tambahkan produk UMKM ke platform</p>
+                <h1 className="text-xl font-bold text-gray-900">
+                  Tambah Produk Baru
+                </h1>
+                <p className="text-sm text-gray-500">
+                  Tambahkan produk UMKM ke platform
+                </p>
               </div>
             </div>
           </div>

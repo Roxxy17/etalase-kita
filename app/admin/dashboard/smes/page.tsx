@@ -1,32 +1,80 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import Image from "next/image"
-import { Plus, Search, MapPin, Edit, Trash2, Eye, Star } from "lucide-react"
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { Plus, Search, MapPin, Edit, Trash2, Eye, Star } from "lucide-react";
+// Adjust the import based on your auth utility
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase"; // Adjust the import based on your Supabase setup
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
-import { smes, products } from "@/lib/data"
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export default function SMEsManagement() {
-  const [searchQuery, setSearchQuery] = useState("")
+  const [searchQuery, setSearchQuery] = useState("");
+  const [smes, setSmes] = useState<any[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
+  const [adminUser, setAdminUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  // Fetch data from API
+  useEffect(() => {
+    
+    const fetchData = async () => {
+      const [smeRes, productRes] = await Promise.all([
+        fetch("/api/smes"),
+        fetch("/api/products"),
+      ]);
+
+      const [smeData, productData] = await Promise.all([
+        smeRes.json(),
+        productRes.json(),
+      ]);
+
+      setSmes(smeData);
+      setProducts(productData);
+    };
+    checkSession();
+    fetchData();
+  }, []);
 
   const filteredSMEs = smes.filter((sme) => {
+    const name = sme.name?.toLowerCase() || "";
+    const city = sme.city?.toLowerCase() || "";
+    const province = sme.province?.toLowerCase() || "";
+
     return (
-      sme.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      sme.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      sme.province.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  })
+      name.includes(searchQuery.toLowerCase()) ||
+      city.includes(searchQuery.toLowerCase()) ||
+      province.includes(searchQuery.toLowerCase())
+    );
+  });
+
+  const checkSession = async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        router.push("/admin/login");
+      } else {
+        setAdminUser(sessionData.session.user);
+      }
+      setLoading(false);
+    };
 
   const getSMEProductCount = (smeId: number) => {
-    return products.filter((p) => p.smeId === smeId).length
-  }
+    return products.filter((p) => p.sme_id === smeId).length;
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -35,8 +83,12 @@ export default function SMEsManagement() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div>
-              <h1 className="text-xl font-bold text-gray-900">Manajemen UMKM</h1>
-              <p className="text-sm text-gray-500">Kelola semua UMKM terdaftar</p>
+              <h1 className="text-xl font-bold text-gray-900">
+                Manajemen UMKM
+              </h1>
+              <p className="text-sm text-gray-500">
+                Kelola semua UMKM terdaftar
+              </p>
             </div>
             <div className="flex items-center gap-4">
               <Link href="/admin/dashboard">
@@ -70,9 +122,9 @@ export default function SMEsManagement() {
                   className="pl-10"
                 />
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600">{filteredSMEs.length} UMKM ditemukan</span>
-              </div>
+              <span className="text-sm text-gray-600">
+                {filteredSMEs.length} UMKM ditemukan
+              </span>
             </div>
           </CardContent>
         </Card>
@@ -97,7 +149,7 @@ export default function SMEsManagement() {
                 </TableHeader>
                 <TableBody>
                   {filteredSMEs.map((sme) => {
-                    const productCount = getSMEProductCount(sme.id)
+                    const productCount = getSMEProductCount(sme.id);
 
                     return (
                       <TableRow key={sme.id}>
@@ -105,15 +157,19 @@ export default function SMEsManagement() {
                           <div className="flex items-center gap-3">
                             <div className="w-12 h-12 relative rounded-lg overflow-hidden border">
                               <Image
-                                src={sme.logo || "/placeholder.svg?height=48&width=48"}
+                                src={sme.logo || "/placeholder.svg"}
                                 alt={sme.name}
                                 fill
                                 className="object-cover"
                               />
                             </div>
                             <div>
-                              <p className="font-medium text-gray-900">{sme.name}</p>
-                              <p className="text-sm text-gray-500 line-clamp-1">{sme.shortDescription}</p>
+                              <p className="font-medium text-gray-900">
+                                {sme.name}
+                              </p>
+                              <p className="text-sm text-gray-500 line-clamp-1">
+                                {sme.short_description}
+                              </p>
                             </div>
                           </div>
                         </TableCell>
@@ -122,7 +178,9 @@ export default function SMEsManagement() {
                             <MapPin className="h-4 w-4 text-gray-400" />
                             <div>
                               <p className="font-medium">{sme.city}</p>
-                              <p className="text-sm text-gray-500">{sme.province}</p>
+                              <p className="text-sm text-gray-500">
+                                {sme.province}
+                              </p>
                             </div>
                           </div>
                         </TableCell>
@@ -140,7 +198,9 @@ export default function SMEsManagement() {
                                 Unggulan
                               </Badge>
                             )}
-                            <Badge className="bg-green-100 text-green-800">Aktif</Badge>
+                            <Badge className="bg-green-100 text-green-800">
+                              Aktif
+                            </Badge>
                           </div>
                         </TableCell>
                         <TableCell>
@@ -161,7 +221,7 @@ export default function SMEsManagement() {
                           </div>
                         </TableCell>
                       </TableRow>
-                    )
+                    );
                   })}
                 </TableBody>
               </Table>
@@ -170,5 +230,5 @@ export default function SMEsManagement() {
         </Card>
       </div>
     </div>
-  )
+  );
 }

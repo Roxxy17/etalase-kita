@@ -79,5 +79,5 @@ export default function Map({ smes, selectedSME, setSelectedSME }: MapProps) {
     }
   }, [smes, selectedSME, setSelectedSME])
 
-  return <div id="map" className="w-full h-[600px] rounded-lg border" />
+  return <div id="map" className="w-full min-h-[500px] h-full rounded-lg border" />;
 }

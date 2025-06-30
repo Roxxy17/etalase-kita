@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/table";
 
 export default function ProductsManagement() {
+  const [sessionChecked, setSessionChecked] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedSME, setSelectedSME] = useState("all");
@@ -40,8 +41,10 @@ export default function ProductsManagement() {
 
   const filteredProducts = products.filter((product) => {
     const matchesSearch =
-      (product.name?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
-      (product.description?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
+      (product.name?.toLowerCase().includes(searchQuery.toLowerCase()) ??
+        false) ||
+      (product.description?.toLowerCase().includes(searchQuery.toLowerCase()) ??
+        false);
 
     const matchesCategory =
       selectedCategory === "all" ||
@@ -51,7 +54,9 @@ export default function ProductsManagement() {
       selectedSME === "all" ||
       (product.sme_id && product.sme_id.toString() === selectedSME);
 
-    return matchesSearch && matchesCategory && matchesSME;
+    const isFeatured = product.featured === true;
+
+    return matchesSearch && matchesCategory && matchesSME && isFeatured;
   });
 
   useEffect(() => {
@@ -62,6 +67,7 @@ export default function ProductsManagement() {
         return;
       }
 
+      setSessionChecked(true); // ✅ Sesi valid
       try {
         setLoading(true);
 
@@ -77,20 +83,19 @@ export default function ProductsManagement() {
           smesRes.json(),
         ]);
 
-        // 🔥 Sort produk dan UMKM berdasarkan tanggal terbaru
-        setProducts(
-          [...productsData].sort(
-            (a, b) =>
-              new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-          )
+        const sortedProducts = [...productsData].sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         );
+
+        const sortedSMEs = [...smesData].sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+
+        setProducts(sortedProducts);
         setCategories(categoriesData);
-        setSmes(
-          [...smesData].sort(
-            (a, b) =>
-              new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-          )
-        );
+        setSmes(sortedSMEs);
       } catch (error) {
         console.error("Gagal mengambil data:", error);
       } finally {
@@ -101,10 +106,10 @@ export default function ProductsManagement() {
     fetchData();
   }, [router]);
 
-  if (loading) {
+  if (!sessionChecked) {
     return (
       <p className="w-full bg-gradient-to-r from-gold-500 to-gold-600 text-white py-3 font-semibold text-center shadow">
-        Memuat data produk dan UMKM...
+        Mengecek sesi login...
       </p>
     );
   }

@@ -11,7 +11,6 @@ import {
   Plus,
   TrendingUp,
   LogOut,
-  BarChart3,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -23,29 +22,43 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { smes } from "@/lib/data";
 import { supabase } from "@/lib/supabase";
 
 export default function AdminDashboard() {
   const [adminUser, setAdminUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<any[]>([]);
+  const [smes, setSmes] = useState<any[]>([]);
   const router = useRouter();
 
   useEffect(() => {
     checkSession();
     fetchProducts();
+    fetchSMEs();
   }, []);
 
   const fetchProducts = async () => {
-    const { data } = await supabase.from('products').select('*');
+    const { data } = await supabase
+      .from("products")
+      .select("*")
+      .order("created_at", { ascending: false }); // ambil data terbaru
     if (data) setProducts(data);
+  };
+
+  const fetchSMEs = async () => {
+    const { data } = await supabase
+      .from("smes")
+      .select("*")
+      .order("created_at", { ascending: false }); // ambil data terbaru
+    if (data) setSmes(data);
   };
 
   const checkSession = async () => {
     const { data: sessionData } = await supabase.auth.getSession();
     if (!sessionData.session) {
-      router.push("/admin/login"); // kalau belum login, alihkan ke login
+      router.push("/admin/login");
+    } else {
+      setAdminUser(sessionData.session.user);
     }
     setLoading(false);
   };
@@ -57,7 +70,7 @@ export default function AdminDashboard() {
 
   if (loading)
     return (
-      <p className="w-full bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-white font-semibold py-3 shadow-elegant">
+      <p className="w-full bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-white font-semibold py-3 shadow-elegant text-center">
         Loading...
       </p>
     );
@@ -85,7 +98,7 @@ export default function AdminDashboard() {
       description: "Produk featured",
       icon: <TrendingUp className="h-6 w-6" />,
       color: "from-gold-500 to-gold-600",
-      href: "/admin/dashboard/products",
+      href: "/admin/dashboard/products/top",
     },
     {
       title: "Lokasi Peta",
@@ -119,9 +132,8 @@ export default function AdminDashboard() {
               {adminUser && (
                 <div className="text-right">
                   <p className="text-sm font-medium text-gray-900">
-                    {adminUser.username}
+                    {adminUser.email}
                   </p>
-                  <p className="text-xs text-gray-500">{adminUser.role}</p>
                 </div>
               )}
               <Button
@@ -142,7 +154,7 @@ export default function AdminDashboard() {
         {/* Welcome Section */}
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Selamat datang, {adminUser?.username}!
+            Selamat datang, {adminUser?.email}!
           </h2>
           <p className="text-gray-600">
             Kelola data produk, UMKM, dan peta EtalaseKita dari dashboard ini.
